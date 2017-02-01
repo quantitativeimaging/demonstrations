@@ -684,6 +684,12 @@ grid on
 
 %%
 % Example 13, Truncation error
+% Demonstrate introduction of wrong solution into y'' = y, y(0)=1, y'(0)=-1
+% Given initial conditions, solution should be e^(-x)
+% But some e^x can be added due to truncation or rounding error
+% This demonstration introduces a (very very bad!) rounding error in order 
+% to make the point that numerical errors can introduce wrong parts of the 
+% general ODE solution into specific cases. 
 
 n = 100;    % Set step size and number of steps
 h = 0.1;
@@ -704,11 +710,12 @@ for loop = 1:n
    v = v + h*dvBydx;
    x = x+h;
    
-   y = ceil(y*10)/10; % Add bad numerical truncation error. 
+   y = ceil(y*10)/10; % Artificially put in bad numerical rounding error.
+	 % Comment out the above line to produce a good simualtion. 
 end
 
 
-figure(5)
+figure(17)
 
 plot(listX, listY, 'lineWidth', 2); % Sim
 hold on

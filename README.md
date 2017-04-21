@@ -2,7 +2,7 @@
 Short scripts to demonstrate standalone topics, e.g. for lecture courses
 
 ## Regression to the mean
-Produces a graph to illustrate regression to the mean. 
+Produces a graph to illustrate regression to the mean.
 
 ## Corrosion_Matlab_Figures
 Generates the graphs for CET IIA Corrosion lecture handout and powerpoints.
@@ -17,9 +17,13 @@ Generates  a 3D plot to illustrate this
 Solves a nonlinear equation numerically, to obtain temperatures in a network
 
 ## Engineering Maths
-1. Numerical methods. 
+1. Numerical methods.
 Generates plots showing accuracy of numerical integration and ODE methods.
 2. Lagrange and linear programming.
 Demonstrates constrained optimisation examples
 3. Optimisation
 Demonstrates unconstrained optimisation and its limitations.
+
+## Vesicle distribution analysis
+Uses inter-particle distance matrix and nearest neighbour distances.
+Compares with Monte Carlo uniform random distribution at same total number.

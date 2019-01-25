@@ -724,7 +724,150 @@ hold off
 set(gca, 'fontSize', 14)
 xlabel('x', 'fontSize', 14);
 ylabel('y', 'fontSize', 14);
-% title('Euler', 'fontSize', 14);
+title('Euler, large truncation error', 'fontSize', 14);
 legend('Euler')
 set(gcf,'Position',[100,100,400,300]);
 set(gcf,'color','w')
+%
+
+%% Engineering Maths Matlab Examples 
+% 
+
+% Example 13b: Biexponential decay
+% This example demonstrates a stiff system of 2 ODEs
+%  in which two processes with different timescales mean a simple Euler 
+%  method simulation would need a large number of steps to return an 
+%  accurate result.
+% This particular example is just Y = Ya + Yb, and could be solved by 
+%  adding up the separate exponentual decays Ya and Yb. The problem is that
+%  some systems have the type of multi-timescale processes that
+%  cannot be separated. And these require more advanced numerical methods
+%  such as the adaptive step size...
+%
+
+h     = 0.02;
+steps = 1000;
+k1 = 10;
+k2 = 0.1;
+t = 0;
+y = 2;
+
+listT = zeros(steps,1);
+listY = zeros(steps,1);
+
+for loop = 1:steps
+  listT(loop) = t;
+  listY(loop) = y;
+    
+  f = -k1*exp(-k1*t) - k2*exp(-k2*t); % Pretend we can't solve this exactly
+  y = y + h*f;
+  t = t+h;
+end
+
+figure(1)
+ hold on
+   scatter(listT, listY, 'bo')
+ hold off
+ set(gca, 'fontSize', 16)
+ xlabel('t', 'fontSize', 18);
+ ylabel('y', 'fontSize', 18);
+ title('Biexponential decay', 'fontSize', 18);
+ % legend('exact', 'simulated', 'simulated')
+set(gcf,'Position',[100,100,400,300]);
+set(gcf,'color','w')
+
+
+%% With adaptive step size for x:
+h     = 0.02;
+steps = 40;
+k1 = 10;
+k2 = 0.1;
+t = 0;
+y = 2;
+
+listT = zeros(steps,1);
+listY = zeros(steps,1);
+
+% Try fixed step in y...
+for loop = 1:steps
+  listT(loop) = t;
+  listY(loop) = y;
+    
+  f = -k1*exp(-k1*t) - k2*exp(-k2*t);
+  h = abs(0.05/f);
+  y = y + h*f;
+  t = t+h;
+end
+
+figure(2)
+ hold on
+   scatter(listT, listY, 'bo')
+ hold off
+ set(gca, 'fontSize', 16)
+ xlabel('t', 'fontSize', 18);
+ ylabel('y', 'fontSize', 18);
+ title('Biexponential decay', 'fontSize', 18);
+ % legend('exact', 'simulated', 'simulated')
+set(gcf,'Position',[100,100,400,300]);
+set(gcf,'color','w')
+
+
+%% With adaptive step size (based on a numerical estimate of error)
+clear % avoid memory buildup due to loop below
+h     = 0.02;
+distance = 20;
+k1 = 10;
+k2 = 0.1;
+t = 0;
+y = 2;
+
+loop = 1;
+
+targetError = 0.005;
+
+% Try to keep proportional error 1%
+while t < distance
+  listT(loop) = t; 
+  listY(loop) = y;
+  
+  % 1 step of Euler simulation
+  f = -k1*exp(-k1*t) - k2*exp(-k2*t);
+  y1step = y + h*f;
+
+  % 2 steps of Euler simulation
+  f1 = -k1*exp(-k1*t) - k2*exp(-k2*t);
+  yG = y + f1*0.5*h;
+  f2 = -k1*exp(-k1*(t+0.5*h)) - k2*exp(-k2*(t+0.5*h));
+  y2step = yG + f2*0.5*h;
+  
+  localErrorEst = abs(y2step - y1step)/2;
+  localPropError = localErrorEst/y;
+  
+  if(localPropError > targetError)
+      h = h/2;
+      continue;
+  elseif(localPropError < targetError/4)
+      h = 2*h;
+      continue;
+  end
+  
+  t = t+h;
+  y = y2step;
+  loop = loop+1;
+end
+  listT(loop) = t;
+  listY(loop) = y;
+  
+figure(3)
+   scatter(listT, listY, 'bo')
+
+ set(gca, 'fontSize', 16)
+ xlabel('t', 'fontSize', 18);
+ ylabel('y', 'fontSize', 18);
+ title('Biexponential decay', 'fontSize', 18);
+ % legend('exact', 'simulated', 'simulated')
+set(gcf,'Position',[100,100,400,300]);
+set(gcf,'color','w')
+ylim([0 2])
+xlim([0 20])
+

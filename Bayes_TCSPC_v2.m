@@ -7,16 +7,28 @@
 % % likelihood.
 % 
 % NOTES - CHECK ADDITION OF LIKELIHOODS! (15-6-2017)
-%       - I think the addition is sometimes log when it might be linear
+% 1.    - I think the addition is sometimes log when it might be linear
 %       - Probably under-weights terms with missing observations. 
-%       - 
 %       - Probably fixed (15/6)
-%       - But am I now over-counting miss chance
-%       - second one should not be (m-1)/N_D
-%       - But a correction to (m-1)/N_D from (L/N_D). Poss (m-1)/L
+%       - 
+%       - But am I now over-counting the miss chance in the first phase
+%       - Second one should be (m-1)/N_D
+%       - Add a correction to (m-1)/N_D from (L/N_D). Poss (m-1)/L
+%       - try moving the entire miss prob into the detection-time prob code
+%       - - Done - by adding correction term above - probably fixed? 
+%
+% 2.    - Uniform prior may over-favour high n and lifetime?
+%       - Suppress over-high n's in prior? ('Weakly' informative prior?)
+%       - In fact the problem may be some bug in the likelihood model...
+%       - Possibly Nf=5 leads to too-low tau estimates and Nf=10 to too-hi
+%       - suggests some sort of incorrect counting
+%       - Try poss_taus = 0.1:12 to avoid bad marginalisation
+%       - Actually the problem might be the poss-ns prior... truncation to
+%         a range n_det:(1.3)*n_det may help a bit...
+%       - Or maybe some info on the n-dist from L is not being used
 
 
-number_of_simulations = 20;
+number_of_simulations = 100;
 EST_TAUS = zeros(number_of_simulations, 1);
 for lpGrand = 1:number_of_simulations
 	
@@ -30,17 +42,17 @@ for lpGrand = 1:number_of_simulations
 % tObs  = [3.6689; 5.4470; % From tau = 4.1, 5 arrivals
 % tObs  = [0.8508; 1.0155; 1.1545; 1.5293; 3.3626]; % 5 arrivals, tau = 4.1
 % tObs  = [1.5441; 1.8589; 2.8371; 4.1173] % from 5 arrivals, tau=4.1. Gives nice result...
-%   tObs    = [1.1568; 1.6567; 2.0638; 3.3979; 4.1945]; % from 5 arrivals, tau=4.1. Gives nice result...
+% tObs    = [1.1568; 1.6567; 2.0638; 3.3979; 4.1945]; % from 5 arrivals, tau=4.1. Gives nice result...
 
 % 1. PHOTON DYNAMICS SIMULATION:
-% OR SIMULATE SOME DETECTION TIMES:
+% THIS IS TO SIMULATE SOME DETECTION TIMES:
 tObsList  = [];   % Detected photon times
 n_D       = 32;   % Number of detector elements
 T         = 25;   % Upper time limit of detection
 Q         = 1.00; % Constant quantum efficiency term
 tau_known = 4.1;  % Defined Lifetime, ns
 lambda_known = 1/tau_known; % in case 1/tau is useful
-Nf        = 10; % number of excited fluorophores
+Nf        = 5; % number of excited fluorophores
 tEms = exprnd(tau_known, Nf,1); 
 tEmsSorted = sort(tEms);
 listDetRands = rand(size(tEmsSorted));
@@ -65,8 +77,8 @@ Q = 1.00; % Constant quantum efficiency term (should be a known value)
 T = 25;   % nanoseconds. Upper time-limit of detector
 N_D = 32; % Number of detector elements. Known.
 
-poss_ns = [L:(ceil(2*L))];
-poss_taus = 1:0.2:20;
+poss_ns = [L:(ceil(1.3*L))];
+poss_taus = 0.1:0.05:12;
 [array_ns, array_taus] = meshgrid(poss_ns, poss_taus); 
 
 list_ns = array_ns(:);
@@ -140,7 +152,7 @@ for jL = 0:(n-L)
 		  % Sum up: Prob miss j photons * Prob detect k'th photon, k=m+j 
 		  f_inc = nchoosek((n-1),(j+m-1)) * ... 
 				      lam*(n)*(1-exp(-lam*t_m_d))^(j+m-1)*exp(-(n-j-m+1)*lam*t_m_d) * ...  
-						  Q* ( 1 - Q*(N_D+1-m)/N_D )^j;
+						  Q* ( m/L )^j;
 			f_m_d = f_m_d + f_inc;
 		end
 		log_fmd = log(f_m_d);
@@ -168,11 +180,14 @@ title('Imperfect inference of (n,\Tau) given detection times')
 
 p_marginal = sum(sum(exp(array_log_likelihood)));
 est_tau = sum(sum(exp(array_log_likelihood).*array_taus)) / p_marginal
-
+ 
 figure(6)
-plot(poss_taus, (p_post_taus_log) );
+plot(poss_taus(1:end), exp(p_post_taus_log(1:end) -max(p_post_taus_log)) );
 xlabel('lifetime / ns', 'fontSize', 14)
 ylabel('likelihood / arb', 'fontSize', 14)
+% set(gca, 'fontSize',18)
+xlim([3 5])
+% title('Posterior prob for lifetime after 100 laser pulses')
 
 
 p_post_taus = sum(exp(array_log_likelihood), 2) / p_marginal;
@@ -180,13 +195,13 @@ p_post_taus = sum(exp(array_log_likelihood), 2) / p_marginal;
 p_post_taus_log   = p_post_taus_log + log(p_post_taus);
 % p_post_taus_log = log(p_post_taus);
 
-figure(7)
-plot(poss_taus, p_post_taus / (sum(p_post_taus) ));
-xlabel('lifetime (discretised) / ns', 'fontSize', 14)
-ylabel('likelihood / normalised', 'fontSize', 14)
-title('Likelihood - if photons may miss', 'fontSize', 14)
-set(gca, 'fontSize', 14)
-% ylim([0 0.12])
+% figure(7)
+% plot(poss_taus, p_post_taus_log / (sum(p_post_taus) ));
+% xlabel('lifetime (discretised) / ns', 'fontSize', 14)
+% ylabel('likelihood / normalised', 'fontSize', 14)
+% title('Log Likelihood - if photons may miss', 'fontSize', 14)
+% set(gca, 'fontSize', 14)
+% % ylim([0 0.12])
 drawnow
 
 figure(8)
@@ -198,14 +213,6 @@ set(gca, 'fontSize', 14)
 
 % figure(9)
 % mesh(list_log_fmds);
-
-% % % %  REPEAT FOR MANY PULSES:
-% % Repeat simulation and inference:
-% % p_post_taus = sum(exp(array_log_likelihood), 2) / p_marginal;
-% p_post_grand = p_post_taus;
-% p_post_grand = p_post_grand + p_post_taus;
-% 
-
 
 EST_TAUS(lpGrand) = est_tau;
 end

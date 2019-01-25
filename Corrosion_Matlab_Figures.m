@@ -149,19 +149,17 @@ Ib = - i0.*exp(-azF.*eta./RT);
 figure(2)
  plot(eta, I, 'lineWidth', 4);
  
-  xlabel('polarisation / Volts','fontSize',12)
-  ylabel('current density / (\mu{}A / cm^2)','fontSize',12)
+  xlabel('overpotential / Volts','fontSize',18)
+  ylabel('current density / (\mu{}A / cm^2)','fontSize',18)
 
   grid on
-  set(gca,'FontSize',12);
-  %set(gca,'FontWeight','bold');
+  set(gca,'FontSize',18);
   set(2,'Position',[100,100,800,600]);
   set(gcf,'color','w')
   %    set(gca,'yTick',[-50:25:50])
       
   % xlim([-0.1 0.1])    
  %  ylim([])
- % ylim([-8 8])
       
   hold on
    plot(eta, If, 'r--','lineWidth', 2);
